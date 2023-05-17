@@ -11,11 +11,7 @@ format:
 editor: visual
 ---
 
-```{r}
-#| label: load-libraries
-#| echo: false # This option disables the printing of code (only output is displayed).
-#| message: false
-#| warning: false
+```{r, warning =FALSE}
 
 library(tidyverse)
 library(nycflights13)
@@ -38,11 +34,11 @@ data(flights)
 
 ```{r}
 #| label: problem-1
-#First, we look at the data with VIEW, and we identify the important variables. 
+#looking at the data with VIEW, and we identify the important variables. 
 view(flights)
 # Had an arrival delay of two or more hours (> 120 minutes)
 
-#I create Problem 1. We are looking for lines with the variable ARR_DELAY that show more than 120 minutes. We also sort by that variable. 
+#I create Problem 1. Looking for lines with the variable ARR_DELAY that show more than 120 minutes.Sort by that variable. 
 flights %>% 
   filter(arr_delay>120) %>% 
   arrange(arr_delay)
@@ -94,8 +90,7 @@ flights %>%
 
 
 # Calculating the number of cancelled flights per month on cancelled_flights column
-library(nycflights13)
-library(dplyr)
+
 Question2.1cancelled<- flights %>%
   group_by(month) %>%
   summarise(cancelled_flights = sum(is.na(dep_delay)))
@@ -134,20 +129,20 @@ For the plane with the greatest number of flights and that had more than 50 seat
 
 ```{r}
 #Identify NYC airport codes (EWR, JFK, LGA) and count the lines any time the origin is one of those, groupy by tail number
-library(nycflights13)
-library(dplyr)
-Q3_flights_fromNYC<-flights %>% 
+
+flights_from_nyc<-flights %>% 
   filter(year==2013,origin %in% c("EWR","JFK","LGA")) %>% 
   group_by(tailnum) %>% 
   summarise(Flights_from_NYC=n()) %>% 
-  arrange(desc(Flights_from_NYC)) %>% 
+  arrange(desc(Flights_from_NYC))
 
 #Filter only for the highest at this variable
-max_flightsNYC <- Q3_flights_fromNYC %>%
-  slice(2) %>% 
+max_flightsNYC <- flights_from_nyc%>%
+  slice(2)#WE SEE THAT THE ERROR LINE WITH NA IS THE ONE WITH MORE COINCIDENCES, WE WANT TO FILTER ONLY FOR VALUES DIFFERENT FROM NA.
+max_flightsNYC %>% 
 #LEftjoin with planes table to show information on that plane
   left_join(planes,by="tailnum")
-#WE SEE THAT THE ERROR LINE WITH NA IS THE ONE WITH MORE COINCIDENCES, WE WANT TO FILTER ONLY FOR VALUES DIFFERENT FROM NA.
+
 ```
 
 ## Problem 4: The `nycflights13` package includes a table (`weather`) that describes the weather during 2013. Use that table to answer the following questions:
@@ -165,10 +160,6 @@ max_flightsNYC <- Q3_flights_fromNYC %>%
 #relationship betweer precip and visib
 #From ChatGPT:
 
-# Load required libraries
-library(nycflights13)
-library(dplyr)
-library(ggplot2)
 
 # Filter for weather data in July 2013
 weather_jul13 <- weather %>%
@@ -176,26 +167,30 @@ weather_jul13 <- weather %>%
 
 # Plot a histogram of temperature
 ggplot(weather_jul13, aes(x = temp)) + 
-  geom_histogram(binwidth = 1, color = "white", fill = "blue") +
+  geom_histogram(binwidth = 1, color = "white", fill = "orange") +
   labs(title = "Distribution of Temperature in July 2013",
-       x = "Temperature (Fahrenheit)",
+       x = "Temperature (F)",
        y = "Frequency")
-#[FIX THIS]WE SEE THAT THE TEMPERATURE DISTRIBUTES NORMAL WITH MEAN AROUND 78 AND DESV EST AROUND 4
 
-# Identify outliers in terms of wind_speed
-ggplot(weather_jul13, aes(y = wind_speed, x = temp)) +
-  geom_boxplot(fill = "lightblue", color = "white") +
-  scale_y_continuous(limits = c(0, max(weather_jul13$wind_speed) + 5)) +
-  labs(title = "Wind Speed by Temperature in July 2013",
-       x = "Temperature (Fahrenheit)",
-       y = "Wind Speed (mph)")
-#[FIX THIS]WE SEE THAT THE THERE ARE OUTLIERS 
+#[****]Graphing to identify outliers depending on standard deviations
+weather %>%
+  filter(month == 7) %>%
+  ggplot(aes(x = temp)) +
+  geom_histogram(fill = "#4B0082") +
+  geom_vline(aes(xintercept = mean(temp)), color = "red", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(temp) + sd(temp)), color = "orange", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(temp) - sd(temp)), color = "orange", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(temp) + 2*sd(temp)), color = "purple", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(temp) - 2*sd(temp)), color = "purple", linetype = "dashed", size = 1) +
+  labs(title = "Distribution of Temperature in July 2013",
+       x = "Temperature (F)",
+       y = "Count")
+
+
+#WE SEE THAT THE THERE ARE OUTLIERS with more than 2 st dev away from mean
 
 #To evaluate a relationship betweer dewp and humid, will build a scatter plot to look for correlation. Another option could be to calculate correlation betweeen variables. 
 
-library(nycflights13)
-library(dplyr)
-library(ggplot2)
 
 # Create a scatterplot of dewp vs. humid with trend line
 ggplot(weather, aes(x = dewp, y = humid)) +
@@ -203,11 +198,9 @@ ggplot(weather, aes(x = dewp, y = humid)) +
   geom_smooth(method = "lm") +
   labs(title = "Scatterplot of dewp vs. humid",
        x = "Dew Point Temperature (Fahrenheit)",
-       y = "Humidity (%)")
+       y = "Humidity (%)") 
+  
 #We see a positive correlation, now I will Evaluate strength of correlation
-
-library(nycflights13)
-library(dplyr)
 
 # Fit a linear regression model for dewp vs. humid
 model <- lm(humid ~ dewp, data = weather)
@@ -222,9 +215,7 @@ cat("R-squared value:", r_squared)
 #With an R-squared of 0.2623 we can see that the fit is not very strong. 
 
 # Load required libraries
-library(nycflights13)
-library(dplyr)
-library(ggplot2)
+
 
 # Create a scatterplot of precip vs. visib with trend line
 ggplot(weather, aes(x = precip, y = visib)) +
@@ -250,13 +241,7 @@ cat("Pearson correlation coefficient:", correlation)
 ```
 
 ```{r}
-# Load required packages
-library(nycflights13)
-library(dplyr)
 
-# Load flights and planes data
-data(flights)
-data(planes)
 
 # Count the number of planes with missing date of manufacture
 missing_manufacture_count <- planes %>%
@@ -270,7 +255,7 @@ missing_manufacture_count
 # Count the number of planes for each manufacturer
 manufacturer_counts <- planes %>% 
   count(manufacturer, sort = TRUE)
-#[******] NO ME GUSTAN ESTAS FUNCIONES COUNT Y HEAD
+
 # Get the top 5 manufacturers
 top_manufacturers <- head(manufacturer_counts$manufacturer, 5)
 
@@ -297,26 +282,13 @@ manufacturer_counts_2013 <- flights_planes_2013 %>%
 
 manufacturer_counts_2013
 
-#[*****]ELIMINAR DE ACA PARA ABAJO 
-# Count the number of NA values in the year variable
-sum(is.na(flights$year))
-#the answer is none
-#validating 
-planes %>% 
-  arrange(year)
-planes %>% 
-  arrange(desc(year))
-
-#What are the five most common manufacturers?we try to count every line and group by manufacturer. Then, get the maximum value. 
-#Using planes table
-Q5Planes_per_manufacturer<-planes %>%
-  group_by(manufacturer) %>% 
-  summarise(Planes_per_maunf=sum(n())) %>% 
-  arrange(desc(Planes_per_maunf)) %>% 
-  slice(1:5)
-  
-#[FIX THIS] *** need to solve a question here
-  
+#ggplot
+ggplot(manufacturer_counts_2013, aes(x = reorder(manufacturer, -n), y = n)) +
+  geom_bar(stat = "identity", fill = "#4B0082") +
+  labs(title = "Number of Flights by Manufacturer in 2013",
+       x = "Manufacturer",
+       y = "Number of Flights") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
 
@@ -367,8 +339,7 @@ unique_airplanes
 ```
 
 ```{r}
-library(nycflights13)
-library(dplyr)
+
 
 # Calculate median arrival delay on a month-by-month basis in each airport
 median_arrival_delay <- flights %>%
@@ -394,13 +365,12 @@ ggplot(median_arrival_delay_airline, aes(x = month, y = median_arr_delay, color 
 
 ```
 
-## Problem 8: Let's take a closer look at what carriers service the route to San Francisco International (SFO). Join the `flights` and `airlines` tables and count which airlines flew the most to SFO. Produce a new dataframe, `fly_into_sfo` that contains three variables: the `name` of the airline, e.g., `United Air Lines Inc.` not `UA`, the count (number) of times it flew to SFO, and the `percent` of the trips that that particular airline flew to SFO.
+## Problem 8: route to (SFO).three variables: the `name`, count of times it flew to SFO, and the `percent` of the trips that that particular airline flew to SFO.
 
 ```{r}
 
 
-#With the help of Microsoft's Bing Chat answer, after iterating +5 times with chatGPT
-library(nycflights13)
+#With the help of Microsoft's Bing Chat answer, after iterating +5 times with chatGPT:
 
 fly_into_sfo <- flights %>%
   #filtering landing at SFO
@@ -479,86 +449,44 @@ fly_into_sfo %>%
 
 ## Problem 9: Let's take a look at cancellations of flights to SFO. We create a new dataframe `cancellations` as follows
 
-```{r}
+To organise data:
 
-cancellations <- flights %>% 
-  
-  # just filter for destination == 'SFO'
-  filter(dest == 'SFO') %>% 
-  
-  # a cancelled flight is one with no `dep_time` 
-  filter(is.na(dep_time))
+-   filter for desitnation airport SFO
 
-```
+-   filter not cancelled by filtering out those with no informtion on depart time
 
-I want you to think how we would organise our data manipulation to create the following plot. No need to write the code, just explain in words how you would go about it.
+-   we calculate cancellations per airline name and origin airport and month(summarising for those variables)
+
+-   we arrange per month
+
+To plot:
 
 -   First ask ggplot and select data
 
-<!-- -->
-
--   define x axis as months, and Y axis as count, or number of cancelled flights
+-   define X axis as months, and Y axis as count, or number of cancelled flights
 
 -   Then define the type of graph as bars
 
 -   show the information for every airline name and takeoff airport pair with wrap
 
--   eliminate labels on
-
--   
-
-![](images/sfo-cancellations.png)
+-   eliminate labels on axis
 
 ## Problem 10: On your own -- Hollywood Age Gap
 
-The website https://hollywoodagegap.com is a record of *THE AGE DIFFERENCE IN YEARS BETWEEN MOVIE LOVE INTERESTS*. This is an informational site showing the age gap between movie love interests and the data follows certain rules:
-
--   The two (or more) actors play actual love interests (not just friends, coworkers, or some other non-romantic type of relationship)
--   The youngest of the two actors is at least 17 years old
--   No animated characters
-
-The age gaps dataset includes "gender" columns, which always contain the values "man" or "woman". These values appear to indicate how the characters in each film identify and some of these values do not match how the actor identifies. We apologize if any characters are misgendered in the data!
-
-The following is a data dictionary of the variables used
-
-| variable            | class     | description                                                                                             |
-|:-----------|:-----------|:-----------------------------------------------|
-| movie_name          | character | Name of the film                                                                                        |
-| release_year        | integer   | Release year                                                                                            |
-| director            | character | Director of the film                                                                                    |
-| age_difference      | integer   | Age difference between the characters in whole years                                                    |
-| couple_number       | integer   | An identifier for the couple in case multiple couples are listed for this film                          |
-| actor_1\_name       | character | The name of the older actor in this couple                                                              |
-| actor_2\_name       | character | The name of the younger actor in this couple                                                            |
-| character_1\_gender | character | The gender of the older character, as identified by the person who submitted the data for this couple   |
-| character_2\_gender | character | The gender of the younger character, as identified by the person who submitted the data for this couple |
-| actor_1\_birthdate  | date      | The birthdate of the older member of the couple                                                         |
-| actor_2\_birthdate  | date      | The birthdate of the younger member of the couple                                                       |
-| actor_1\_age        | integer   | The age of the older actor when the film was released                                                   |
-| actor_2\_age        | integer   | The age of the younger actor when the film was released                                                 |
-
-```{r}
-
-
-age_gaps <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-02-14/age_gaps.csv')
-
-
-```
-
-How would you explore this data set? Here are some ideas of tables/ graphs to help you with your analysis
-
 Answer:
 
--   How is `age_difference` distributed? What's the 'typical' `age_difference` in movies?
+-   HOW AGE DIFFERENCE IS DISTRIBUTED Mean, median, desv est., modew
 
--   The `half plus seven\` rule. Large age disparities in relationships carry certain stigmas. One popular rule of thumb is the [half-your-age-plus-seven](https://en.wikipedia.org/wiki/Age_disparity_in_sexual_relationships#The_.22half-your-age-plus-seven.22_rule) rule. This rule states you should never date anyone under half your age plus seven, establishing a minimum boundary on whom one can date. In order for a dating relationship to be acceptable under this rule, your partner's age must be:
+-   HALF PLUS SEVEN;how many how many couples match the age/2+7 rule, by calculating a new column with the calculation of the older actor, and checking if that calculation is lower or equal to the age of the youngest
 
-$$\frac{\text{Your age}}{2} + 7 < \text{Partner Age} < (\text{Your age} - 7) * 2$$ How frequently does this rule apply in this dataset?
-
+```{=html}
+<!-- -->
+```
 -   Which movie has the greatest number of love interests?
--   Which actors/ actresses have the greatest number of love interests in this dataset?
--   Is the mean/median age difference staying constant over the years (1935 - 2022)?
--   How frequently does Hollywood depict same-gender love interests?
+-   MOVIES WITH GREATEST LOVE INTERESTS: count love interest and summarise by movie
+-   ACTORWITH MOST LOVE INTERESTS count love interest, summarise by actor, arrange descending, pick first
+-   MEAN OVER THE YEARS: Calculate the mean of the age difference,s ummarise by year, arrange ascending, plot line (smooth)
+-   SAME GENDER: create column of type of love interest: different or same, and add to every line accordign to the genders of each. then count different and same summarising by type of love interest
 
 # Deliverables
 
@@ -570,7 +498,7 @@ There is a lot of explanatory text, comments, etc. You do not need these, so del
 -   Approximately how much time did you spend on this problem set: ANSWER HERE
 -   What, if anything, gave you the most trouble: multiple lines to answer one question, such as calculations, filter, etc. Remembering to checck the data for NA, or errors, validating my answers
 
-**Please seek out help when you need it,** and remember the [15-minute rule](https://mam2022.netlify.app/syllabus/#the-15-minute-rule){target="_blank"}. You know enough R (and have enough examples of code from class and your readings) to be able to do this. If you get stuck, ask for help from others, post a question on Slack-- and remember that I am here to help too!
+**Please seek out help when you need it,** and remember the [15-minute rule](https://mam2022.netlify.app/syllabus/#the-15-minute-rule){target="\_blank"}. You know enough R (and have enough examples of code from class and your readings) to be able to do this. If you get stuck, ask for help from others, post a question on Slack-- and remember that I am here to help too!
 
 > As a true test to yourself, do you understand the code you submitted and are you able to explain it to someone else?
 
